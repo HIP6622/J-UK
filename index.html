@@ -355,12 +355,10 @@ const fontStr = `bold ${size}px "${font}", Arial, sans-serif`;
   let maxW = 0;
   lines.forEach(l => { const m = tmpCtx.measureText(l).width; if (m > maxW) maxW = m; });
 
-  const lineH = size * lh;
-  const textH = lines.length * lineH;
-  const W = Math.ceil(maxW + pad * 2);
-  const H = Math.ceil(textH + pad * 2);
-
-  c2.width = W; c2.height = H;
+const W = fval('s-width');
+const H = fval('s-height');
+const lineH = size * lh;
+c2.width = W; c2.height = H;
 
   // BG
   ctx2.fillStyle = bgColor;
