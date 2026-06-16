@@ -156,7 +156,14 @@ input[type=file]{display:none}
       <label>ריפוד <span class="val-display" id="spdv">32</span>px</label>
       <input type="range" id="s-pad" min="0" max="100" value="32">
     </div>
-    <button class="btn btn-red" onclick="renderSticker()">עדכן סטיקר</button>
+   <div class="box">
+  <h3>גודל תמונה</h3>
+  <label>רוחב <span class="val-display" id="swv2">400</span>px</label>
+  <input type="range" id="s-width" min="100" max="1200" value="400" step="10">
+  <label>גובה <span class="val-display" id="shv">400</span>px</label>
+  <input type="range" id="s-height" min="100" max="1200" value="400" step="10">
+</div>
+<button class="btn btn-red" onclick="renderSticker()">עדכן סטיקר</button>
   </div>
 </div>
 
@@ -197,7 +204,7 @@ bind('logo-size','lsv','%'); bind('logo-alpha','lav','%');
 bind('s-size','ssv','px'); bind('s-stroke-w','swv','');
 bind('s-lh','slhv',''); bind('s-logo-size','slsv','%');
 bind('s-logo-alpha','slav','%'); bind('s-pad','spdv','px');
-bind('s-img-size','simgsv','%'); bind('s-img-y','simgyv','%'); bind('s-img-alpha','simgav','%');
+bind('s-img-size','simgsv','%'); bind('s-img-y','simgyv','%'); bind('s-img-alpha','simgav','%');bind('s-width','swv2','px'); bind('s-height','shv','px');
 
 // Live preview for sticker
 ['s-text','s-font','s-size','s-color','s-stroke','s-stroke-w','s-align','s-lh','s-bg','s-logo-size','s-logo-alpha','s-pad','s-img-size','s-img-y','s-img-alpha'].forEach(id => {
@@ -334,8 +341,10 @@ function renderSticker() {
   const logoAlpha = fval('s-logo-alpha') / 100;
   const pad = fval('s-pad');
 
-  const lines = text.split('\n');
-  const fontStr = `bold ${size}px "${font}", Arial, sans-serif`;
+const W = fval('s-width');
+const H = fval('s-height');
+const lines = text.split('\n');
+const fontStr = `bold ${size}px "${font}", Arial, sans-serif`;
 
   // Measure
   const tmpC = document.createElement('canvas');
