@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>החתול – עורך מימים</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Assistant:wght@400;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Heebo',sans-serif;background:#111;color:#eee;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+header{width:100%;background:#1a1a1a;border-bottom:2px solid #cc0000;padding:12px 24px;display:flex;align-items:center;gap:12px}
+header img{height:44px}
+header h1{font-size:1.5rem;font-weight:900;color:#cc0000}
+.tabs{display:flex;gap:0;margin:20px 0 0;width:100%;max-width:1000px}
+.tab{flex:1;padding:12px;text-align:center;background:#1e1e1e;border:1px solid #333;cursor:pointer;font-size:1rem;font-weight:700;color:#777;transition:all .2s}
+.tab:first-child{border-radius:10px 0 0 0}
+.tab:last-child{border-radius:0 10px 0 0}
+.tab.active{background:#cc0000;color:#fff;border-color:#cc0000}
+.page{display:none;width:100%;max-width:1000px;background:#1e1e1e;border:1px solid #333;border-top:none;border-radius:0 0 10px 10px;padding:24px;gap:20px}
+.page.active{display:flex;flex-wrap:wrap}
+
+/* CANVAS */
+.canvas-area{flex:1 1 500px;display:flex;flex-direction:column;gap:10px}
+.canvas-wrap{position:relative;background:#2a2a2a;border:2px dashed #444;border-radius:10px;min-height:360px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:crosshair}
+.canvas-wrap.dragover{border-color:#cc0000}
+.drop-hint{color:#555;font-size:1rem;text-align:center;pointer-events:none;user-select:none;position:absolute}
+canvas{display:block;max-width:100%;max-height:520px;border-radius:8px}
+
+/* PANEL */
+.panel{flex:0 0 240px;display:flex;flex-direction:column;gap:12px}
+.box{background:#252525;border:1px solid #333;border-radius:8px;padding:14px}
+.box h3{font-size:.78rem;color:#cc0000;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+label{font-size:.82rem;color:#aaa;display:block;margin-bottom:3px;margin-top:8px}
+label:first-of-type{margin-top:0}
+input[type=text],textarea,select{width:100%;background:#111;border:1px solid #444;border-radius:6px;color:#eee;padding:7px 10px;font-family:'Heebo',sans-serif;font-size:.9rem;resize:vertical}
+input[type=range]{width:100%;accent-color:#cc0000;margin-top:2px}
+input[type=color]{width:38px;height:30px;border:none;background:none;cursor:pointer;border-radius:4px}
+.row{display:flex;align-items:center;gap:8px}
+.row>*{flex:1}
+.btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 14px;border-radius:7px;border:none;font-family:'Heebo',sans-serif;font-size:.88rem;font-weight:700;cursor:pointer;transition:filter .15s;width:100%;margin-top:4px}
+.btn:hover{filter:brightness(1.15)}
+.btn-red{background:#cc0000;color:#fff}
+.btn-dark{background:#333;color:#eee}
+.upload-lbl{display:block;background:#2a2a2a;border:2px dashed #555;color:#bbb;padding:10px;border-radius:7px;cursor:pointer;font-size:.88rem;text-align:center;transition:border-color .2s}
+.upload-lbl:hover{border-color:#cc0000;color:#fff}
+input[type=file]{display:none}
+.val-display{font-size:.75rem;color:#888;float:left}
+
+/* Logo size slider */
+#logo-size-wrap{margin-top:4px}
+</style>
+</head>
+<body>
+
+<header>
+  <img id="hdr-logo" src="https://i.ibb.co/gbTcSBSr/image.png" alt="החתול">
+  <h1>החתול – עורך מימים</h1>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab(0)">🖼 תמונה + לוגו</div>
+  <div class="tab" onclick="switchTab(1)">✍️ סטיקר טקסט</div>
+</div>
+
+<!-- PAGE 1: IMAGE + LOGO -->
+<div class="page active" id="page0">
+  <div class="canvas-area">
+    <div class="canvas-wrap" id="dz1">
+      <div class="drop-hint" id="hint1">גרור תמונה לכאן<br>או בחר קובץ ←</div>
+      <canvas id="c1"></canvas>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-dark" onclick="copyCanvas('c1')">📋 העתק</button>
+      <button class="btn btn-red" onclick="saveCanvas('c1','image-logo.png')">💾 שמור</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h3>תמונה</h3>
+      <label class="upload-lbl" for="fi1">📁 בחר תמונה</label>
+      <input type="file" id="fi1" accept="image/*">
+    </div>
+    <div class="box">
+      <h3>לוגו</h3>
+      <label>גודל לוגו <span class="val-display" id="lsv">25%</span></label>
+      <input type="range" id="logo-size" min="5" max="80" value="25">
+      <label>שקיפות <span class="val-display" id="lav">70%</span></label>
+      <input type="range" id="logo-alpha" min="5" max="100" value="70">
+      <p style="font-size:.78rem;color:#666;margin-top:10px">גרור את הלוגו על התמונה לכל מיקום</p>
+      <button class="btn btn-red" style="margin-top:8px" onclick="renderPage1()">רענן</button>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: TEXT STICKER -->
+<div class="page" id="page1">
+  <div class="canvas-area">
+    <div class="canvas-wrap" style="cursor:default;background:#fff" id="dz2">
+      <canvas id="c2"></canvas>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-dark" onclick="copyCanvas('c2')">📋 העתק</button>
+      <button class="btn btn-red" onclick="saveCanvas('c2','sticker.png')">💾 שמור</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="box">
+      <h3>טקסט</h3>
+      <label>תוכן (Enter = ירידת שורה)</label>
+      <textarea id="s-text" rows="5" placeholder="שורה 1&#10;שורה 2&#10;שורה 3..."></textarea>
+      <label>גופן</label>
+      <select id="s-font">
+        <option value="Heebo">Heebo</option>
+        <option value="Assistant">Assistant</option>
+        <option value="Arial Black">Arial Black</option>
+        <option value="Impact">Impact</option>
+        <option value="Arial">Arial</option>
+      </select>
+      <label>גודל <span class="val-display" id="ssv">52</span>px</label>
+      <input type="range" id="s-size" min="16" max="150" value="52">
+      <div class="row" style="margin-top:8px">
+        <div><label>צבע טקסט</label><input type="color" id="s-color" value="#1a1a1a"></div>
+        <div><label>צבע קונטור</label><input type="color" id="s-stroke" value="#ffffff"></div>
+      </div>
+      <label>עובי קונטור <span class="val-display" id="swv">4</span></label>
+      <input type="range" id="s-stroke-w" min="0" max="20" value="4">
+      <label>יישור</label>
+      <select id="s-align">
+        <option value="center">מרכז</option>
+        <option value="right">ימין</option>
+        <option value="left">שמאל</option>
+      </select>
+      <label>ריווח שורות <span class="val-display" id="slhv">1.3</span></label>
+      <input type="range" id="s-lh" min="0.8" max="2.5" step="0.05" value="1.3">
+    </div>
+    <div class="box">
+      <h3>תמונה בסטיקר (אופציונלי)</h3>
+      <label class="upload-lbl" for="fi2">📁 הוסף תמונה לסטיקר</label>
+      <input type="file" id="fi2" accept="image/*">
+      <label style="margin-top:8px">גודל תמונה <span class="val-display" id="simgsv">50%</span></label>
+      <input type="range" id="s-img-size" min="10" max="100" value="50">
+      <label>מיקום אנכי <span class="val-display" id="simgyv">50%</span></label>
+      <input type="range" id="s-img-y" min="0" max="100" value="50">
+      <label>שקיפות תמונה <span class="val-display" id="simgav">100%</span></label>
+      <input type="range" id="s-img-alpha" min="10" max="100" value="100">
+      <button class="btn btn-dark" id="btn-clear-img" style="margin-top:6px">✕ הסר תמונה</button>
+    </div>
+    <div class="box">
+      <h3>רקע ולוגו</h3>
+      <label>צבע רקע</label>
+      <input type="color" id="s-bg" value="#ffffff">
+      <label>גודל לוגו <span class="val-display" id="slsv">40%</span></label>
+      <input type="range" id="s-logo-size" min="5" max="100" value="40">
+      <label>שקיפות לוגו <span class="val-display" id="slav">12%</span></label>
+      <input type="range" id="s-logo-alpha" min="0" max="60" value="12">
+      <label>ריפוד <span class="val-display" id="spdv">32</span>px</label>
+      <input type="range" id="s-pad" min="0" max="100" value="32">
+    </div>
+    <button class="btn btn-red" onclick="renderSticker()">עדכן סטיקר</button>
+  </div>
+</div>
+
+<script>
+const LOGO_SRC = 'https://i.ibb.co/gbTcSBSr/image.png';
+const logoImg = new Image();
+logoImg.crossOrigin = 'anonymous';
+logoImg.src = LOGO_SRC;
+document.getElementById('hdr-logo').src = LOGO_SRC;
+
+// ---- TABS ----
+function switchTab(i) {
+  document.querySelectorAll('.tab').forEach((t,j) => t.classList.toggle('active', i===j));
+  document.querySelectorAll('.page').forEach((p,j) => p.classList.toggle('active', i===j));
+}
+
+// ---- UTILS ----
+function saveCanvas(id, name) {
+  const c = document.getElementById(id);
+  const a = document.createElement('a'); a.download = name; a.href = c.toDataURL('image/png'); a.click();
+}
+async function copyCanvas(id) {
+  document.getElementById(id).toBlob(async b => {
+    try { await navigator.clipboard.write([new ClipboardItem({'image/png':b})]); alert('הועתק ✓'); }
+    catch { alert('לא נתמך בדפדפן זה, השתמש בשמירה'); }
+  });
+}
+function val(id) { return document.getElementById(id).value; }
+function fval(id) { return parseFloat(document.getElementById(id).value); }
+
+// ---- SLIDER DISPLAYS ----
+function bind(id, display, suffix) {
+  const el = document.getElementById(id);
+  const dsp = document.getElementById(display);
+  el.addEventListener('input', () => { dsp.textContent = el.value + (suffix||''); });
+}
+bind('logo-size','lsv','%'); bind('logo-alpha','lav','%');
+bind('s-size','ssv','px'); bind('s-stroke-w','swv','');
+bind('s-lh','slhv',''); bind('s-logo-size','slsv','%');
+bind('s-logo-alpha','slav','%'); bind('s-pad','spdv','px');
+bind('s-img-size','simgsv','%'); bind('s-img-y','simgyv','%'); bind('s-img-alpha','simgav','%');
+
+// Live preview for sticker
+['s-text','s-font','s-size','s-color','s-stroke','s-stroke-w','s-align','s-lh','s-bg','s-logo-size','s-logo-alpha','s-pad','s-img-size','s-img-y','s-img-alpha'].forEach(id => {
+  document.getElementById(id).addEventListener('input', renderSticker);
+});
+
+// ---- PAGE 1: IMAGE + LOGO ----
+const c1 = document.getElementById('c1');
+const ctx1 = c1.getContext('2d');
+let img1 = null;
+let logoX = 0.75, logoY = 0.85; // relative position
+let draggingLogo = false, dragOffX = 0, dragOffY = 0;
+
+document.getElementById('fi1').addEventListener('change', e => loadImg1(e.target.files[0]));
+
+const dz1 = document.getElementById('dz1');
+dz1.addEventListener('dragover', e => { e.preventDefault(); dz1.classList.add('dragover'); });
+dz1.addEventListener('dragleave', () => dz1.classList.remove('dragover'));
+dz1.addEventListener('drop', e => { e.preventDefault(); dz1.classList.remove('dragover'); loadImg1(e.dataTransfer.files[0]); });
+document.addEventListener('paste', e => {
+  for (const item of e.clipboardData.items)
+    if (item.type.startsWith('image/')) { loadImg1(item.getAsFile()); return; }
+});
+
+function loadImg1(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    const im = new Image();
+    im.onload = () => { img1 = im; c1.width = im.width; c1.height = im.height; renderPage1(); document.getElementById('hint1').style.display='none'; };
+    im.src = ev.target.result;
+  };
+  r.readAsDataURL(file);
+}
+
+function renderPage1() {
+  if (!img1) return;
+  ctx1.clearRect(0, 0, c1.width, c1.height);
+  ctx1.drawImage(img1, 0, 0);
+  const pct = fval('logo-size') / 100;
+  const alpha = fval('logo-alpha') / 100;
+  const lw = c1.width * pct;
+  const lh = lw * (logoImg.height / logoImg.width);
+  const lx = logoX * c1.width - lw / 2;
+  const ly = logoY * c1.height - lh / 2;
+  ctx1.save();
+  ctx1.globalAlpha = alpha;
+  ctx1.drawImage(logoImg, lx, ly, lw, lh);
+  ctx1.restore();
+}
+
+// Logo drag on canvas
+function canvasPos(canvas, e) {
+  const r = canvas.getBoundingClientRect();
+  return {
+    x: (e.clientX - r.left) / r.width,
+    y: (e.clientY - r.top) / r.height
+  };
+}
+
+c1.addEventListener('mousedown', e => {
+  const p = canvasPos(c1, e);
+  const pct = fval('logo-size') / 100;
+  const lw = pct;
+  const lh = lw * (logoImg.height / logoImg.width);
+  if (Math.abs(p.x - logoX) < lw/2 + 0.05 && Math.abs(p.y - logoY) < lh/2 + 0.05) {
+    draggingLogo = true;
+    dragOffX = p.x - logoX;
+    dragOffY = p.y - logoY;
+  }
+});
+c1.addEventListener('mousemove', e => {
+  if (!draggingLogo) return;
+  const p = canvasPos(c1, e);
+  logoX = Math.max(0, Math.min(1, p.x - dragOffX));
+  logoY = Math.max(0, Math.min(1, p.y - dragOffY));
+  renderPage1();
+});
+c1.addEventListener('mouseup', () => draggingLogo = false);
+c1.addEventListener('mouseleave', () => draggingLogo = false);
+
+// Touch support
+c1.addEventListener('touchstart', e => {
+  const t = e.touches[0];
+  const p = canvasPos(c1, t);
+  const pct = fval('logo-size') / 100;
+  const lw = pct;
+  const lh = lw * (logoImg.height / logoImg.width);
+  if (Math.abs(p.x - logoX) < lw/2 + 0.08 && Math.abs(p.y - logoY) < lh/2 + 0.08) {
+    draggingLogo = true; dragOffX = p.x - logoX; dragOffY = p.y - logoY;
+  }
+}, {passive:true});
+c1.addEventListener('touchmove', e => {
+  if (!draggingLogo) return;
+  e.preventDefault();
+  const p = canvasPos(c1, e.touches[0]);
+  logoX = Math.max(0, Math.min(1, p.x - dragOffX));
+  logoY = Math.max(0, Math.min(1, p.y - dragOffY));
+  renderPage1();
+}, {passive:false});
+c1.addEventListener('touchend', () => draggingLogo = false);
+
+document.getElementById('logo-size').addEventListener('input', renderPage1);
+document.getElementById('logo-alpha').addEventListener('input', renderPage1);
+
+// ---- PAGE 2: TEXT STICKER ----
+const c2 = document.getElementById('c2');
+let stickerImg = null;
+document.getElementById('fi2').addEventListener('change', e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    const im = new Image();
+    im.onload = () => { stickerImg = im; renderSticker(); };
+    im.src = ev.target.result;
+  };
+  r.readAsDataURL(file);
+});
+document.getElementById('btn-clear-img').addEventListener('click', () => { stickerImg = null; renderSticker(); });
+const ctx2 = c2.getContext('2d');
+
+function renderSticker() {
+  const text = document.getElementById('s-text').value;
+  const font = val('s-font');
+  const size = fval('s-size');
+  const color = val('s-color');
+  const strokeColor = val('s-stroke');
+  const strokeW = fval('s-stroke-w');
+  const align = val('s-align');
+  const lh = fval('s-lh');
+  const bgColor = val('s-bg');
+  const logoPct = fval('s-logo-size') / 100;
+  const logoAlpha = fval('s-logo-alpha') / 100;
+  const pad = fval('s-pad');
+
+  const lines = text.split('\n');
+  const fontStr = `bold ${size}px "${font}", Arial, sans-serif`;
+
+  // Measure
+  const tmpC = document.createElement('canvas');
+  tmpC.width = 1200; tmpC.height = 200;
+  const tmpCtx = tmpC.getContext('2d');
+  tmpCtx.font = fontStr;
+  tmpCtx.direction = 'rtl';
+  let maxW = 0;
+  lines.forEach(l => { const m = tmpCtx.measureText(l).width; if (m > maxW) maxW = m; });
+
+  const lineH = size * lh;
+  const textH = lines.length * lineH;
+  const W = Math.ceil(maxW + pad * 2);
+  const H = Math.ceil(textH + pad * 2);
+
+  c2.width = W; c2.height = H;
+
+  // BG
+  ctx2.fillStyle = bgColor;
+  ctx2.fillRect(0, 0, W, H);
+
+  // Sticker image layer
+  if (stickerImg) {
+    const imgPct = fval('s-img-size') / 100;
+    const imgAlpha = fval('s-img-alpha') / 100;
+    const imgYPct = fval('s-img-y') / 100;
+    const iw = W * imgPct;
+    const ih = iw * (stickerImg.height / stickerImg.width);
+    const ix = (W - iw) / 2;
+    const iy = (H - ih) * imgYPct;
+    ctx2.save();
+    ctx2.globalAlpha = imgAlpha;
+    ctx2.drawImage(stickerImg, ix, iy, iw, ih);
+    ctx2.restore();
+  }
+
+  // Logo watermark
+  if (logoImg.complete && logoPct > 0) {
+    const lw = W * logoPct;
+    const lh2 = lw * (logoImg.height / logoImg.width);
+    const lx = (W - lw) / 2;
+    const ly = (H - lh2) / 2;
+    ctx2.save();
+    ctx2.globalAlpha = logoAlpha;
+    ctx2.filter = 'blur(3px)';
+    ctx2.drawImage(logoImg, lx, ly, lw, lh2);
+    ctx2.restore();
+  }
+
+  // Text
+  ctx2.font = fontStr;
+  ctx2.textBaseline = 'top';
+  ctx2.direction = 'rtl';
+
+  let xPos;
+  if (align === 'center') { ctx2.textAlign = 'center'; xPos = W / 2; }
+  else if (align === 'right') { ctx2.textAlign = 'right'; xPos = W - pad; }
+  else { ctx2.textAlign = 'left'; xPos = pad; }
+
+  lines.forEach((line, i) => {
+    const y = pad + i * lineH;
+    if (strokeW > 0) {
+      ctx2.lineWidth = strokeW * 2;
+      ctx2.strokeStyle = strokeColor;
+      ctx2.lineJoin = 'round';
+      ctx2.strokeText(line, xPos, y);
+    }
+    ctx2.fillStyle = color;
+    ctx2.fillText(line, xPos, y);
+  });
+}
+
+logoImg.onload = renderSticker;
+renderSticker();
+</script>
+</body>
+</html>
