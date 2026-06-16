@@ -3,28 +3,34 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>החתול – עורך מימים</title>
+<title>CatStamp</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&family=Assistant:wght@400;700&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Heebo',sans-serif;background:#111;color:#eee;min-height:100vh;display:flex;flex-direction:column;align-items:center}
-header{width:100%;background:#1a1a1a;border-bottom:2px solid #cc0000;padding:12px 24px;display:flex;align-items:center;gap:12px}
+header{width:100%;background:#1a1a1a;border-bottom:2px solid #cc0000;padding:12px 24px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
 header img{height:44px}
 header h1{font-size:1.5rem;font-weight:900;color:#cc0000}
-.tabs{display:flex;gap:0;margin:20px 0 0;width:100%;max-width:1000px}
+.tabs{display:flex;gap:0;margin:20px 0 0;width:100%;max-width:1100px}
 .tab{flex:1;padding:12px;text-align:center;background:#1e1e1e;border:1px solid #333;cursor:pointer;font-size:1rem;font-weight:700;color:#777;transition:all .2s}
 .tab:first-child{border-radius:10px 0 0 0}
 .tab:last-child{border-radius:0 10px 0 0}
 .tab.active{background:#cc0000;color:#fff;border-color:#cc0000}
-.page{display:none;width:100%;max-width:1000px;background:#1e1e1e;border:1px solid #333;border-top:none;border-radius:0 0 10px 10px;padding:24px;gap:20px}
+.page{display:none;width:100%;max-width:1100px;background:#1e1e1e;border:1px solid #333;border-top:none;border-radius:0 0 10px 10px;padding:24px;gap:20px}
 .page.active{display:flex;flex-wrap:wrap}
 
-/* CANVAS */
+/* PAGE 1 */
 .canvas-area{flex:1 1 500px;display:flex;flex-direction:column;gap:10px}
 .canvas-wrap{position:relative;background:#2a2a2a;border:2px dashed #444;border-radius:10px;min-height:360px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:crosshair}
 .canvas-wrap.dragover{border-color:#cc0000}
 .drop-hint{color:#555;font-size:1rem;text-align:center;pointer-events:none;user-select:none;position:absolute}
 canvas{display:block;max-width:100%;max-height:520px;border-radius:8px}
+
+/* PAGE 2 – sticky layout */
+#page1{align-items:flex-start}
+.sticker-preview{position:sticky;top:80px;flex:1 1 420px;display:flex;flex-direction:column;gap:10px;align-self:flex-start}
+.sticker-preview .canvas-wrap{background:#fff;cursor:default;min-height:300px}
+.sticker-controls{flex:0 0 280px;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 120px);overflow-y:auto;padding-left:4px}
 
 /* PANEL */
 .panel{flex:0 0 240px;display:flex;flex-direction:column;gap:12px}
@@ -46,15 +52,18 @@ input[type=color]{width:38px;height:30px;border:none;background:none;cursor:poin
 input[type=file]{display:none}
 .val-display{font-size:.75rem;color:#888;float:left}
 
-/* Logo size slider */
-#logo-size-wrap{margin-top:4px}
+/* Size preset buttons */
+.size-presets{display:flex;gap:6px;margin-top:4px}
+.preset-btn{flex:1;padding:8px 4px;background:#2a2a2a;border:1px solid #444;border-radius:6px;color:#bbb;cursor:pointer;font-family:'Heebo',sans-serif;font-size:.82rem;font-weight:700;text-align:center;transition:all .15s}
+.preset-btn:hover{border-color:#cc0000;color:#fff}
+.preset-btn.active{background:#cc0000;color:#fff;border-color:#cc0000}
 </style>
 </head>
 <body>
 
 <header>
-  <img id="hdr-logo" src="https://i.ibb.co/gbTcSBSr/image.png" alt="החתול">
-  <h1>החתול – עורך מימים</h1>
+  <img id="hdr-logo" src="https://i.ibb.co/gbTcSBSr/image.png" alt="CatStamp">
+  <h1>CatStamp</h1>
 </header>
 
 <div class="tabs">
@@ -62,7 +71,7 @@ input[type=file]{display:none}
   <div class="tab" onclick="switchTab(1)">✍️ סטיקר טקסט</div>
 </div>
 
-<!-- PAGE 1: IMAGE + LOGO -->
+<!-- PAGE 1 -->
 <div class="page active" id="page0">
   <div class="canvas-area">
     <div class="canvas-wrap" id="dz1">
@@ -92,9 +101,11 @@ input[type=file]{display:none}
   </div>
 </div>
 
-<!-- PAGE 2: TEXT STICKER -->
+<!-- PAGE 2 -->
 <div class="page" id="page1">
-  <div class="canvas-area">
+
+  <!-- תצוגה מקדימה – נדבקת -->
+  <div class="sticker-preview">
     <div class="canvas-wrap" style="cursor:default;background:#fff" id="dz2">
       <canvas id="c2"></canvas>
     </div>
@@ -103,7 +114,19 @@ input[type=file]{display:none}
       <button class="btn btn-red" onclick="saveCanvas('c2','sticker.png')">💾 שמור</button>
     </div>
   </div>
-  <div class="panel">
+
+  <!-- פקדים – גוללים -->
+  <div class="sticker-controls">
+
+    <div class="box">
+      <h3>גודל סטיקר</h3>
+      <div class="size-presets">
+        <div class="preset-btn active" data-w="800" data-h="800" onclick="setPreset(this)">■ ריבוע<br><small>800×800</small></div>
+        <div class="preset-btn" data-w="1080" data-h="566" onclick="setPreset(this)">▬ רחב<br><small>1080×566</small></div>
+        <div class="preset-btn" data-w="800" data-h="1200" onclick="setPreset(this)">▮ עמוד<br><small>800×1200</small></div>
+      </div>
+    </div>
+
     <div class="box">
       <h3>טקסט</h3>
       <label>תוכן (Enter = ירידת שורה)</label>
@@ -117,7 +140,7 @@ input[type=file]{display:none}
         <option value="Arial">Arial</option>
       </select>
       <label>גודל <span class="val-display" id="ssv">52</span>px</label>
-      <input type="range" id="s-size" min="16" max="150" value="52">
+      <input type="range" id="s-size" min="16" max="200" value="52">
       <div class="row" style="margin-top:8px">
         <div><label>צבע טקסט</label><input type="color" id="s-color" value="#1a1a1a"></div>
         <div><label>צבע קונטור</label><input type="color" id="s-stroke" value="#ffffff"></div>
@@ -132,12 +155,15 @@ input[type=file]{display:none}
       </select>
       <label>ריווח שורות <span class="val-display" id="slhv">1.3</span></label>
       <input type="range" id="s-lh" min="0.8" max="2.5" step="0.05" value="1.3">
+      <label>מיקום טקסט אנכי <span class="val-display" id="stpv">50</span>%</label>
+      <input type="range" id="s-text-y" min="0" max="100" value="50">
     </div>
+
     <div class="box">
       <h3>תמונה בסטיקר (אופציונלי)</h3>
       <label class="upload-lbl" for="fi2">📁 הוסף תמונה לסטיקר</label>
       <input type="file" id="fi2" accept="image/*">
-      <label style="margin-top:8px">גודל תמונה <span class="val-display" id="simgsv">50%</span></label>
+      <label>גודל תמונה <span class="val-display" id="simgsv">50%</span></label>
       <input type="range" id="s-img-size" min="10" max="100" value="50">
       <label>מיקום אנכי <span class="val-display" id="simgyv">50%</span></label>
       <input type="range" id="s-img-y" min="0" max="100" value="50">
@@ -145,6 +171,7 @@ input[type=file]{display:none}
       <input type="range" id="s-img-alpha" min="10" max="100" value="100">
       <button class="btn btn-dark" id="btn-clear-img" style="margin-top:6px">✕ הסר תמונה</button>
     </div>
+
     <div class="box">
       <h3>רקע ולוגו</h3>
       <label>צבע רקע</label>
@@ -154,16 +181,9 @@ input[type=file]{display:none}
       <label>שקיפות לוגו <span class="val-display" id="slav">12%</span></label>
       <input type="range" id="s-logo-alpha" min="0" max="60" value="12">
       <label>ריפוד <span class="val-display" id="spdv">32</span>px</label>
-      <input type="range" id="s-pad" min="0" max="100" value="32">
+      <input type="range" id="s-pad" min="0" max="200" value="32">
     </div>
-   <div class="box">
-  <h3>גודל תמונה</h3>
-  <label>רוחב <span class="val-display" id="swv2">400</span>px</label>
-  <input type="range" id="s-width" min="100" max="1200" value="400" step="10">
-  <label>גובה <span class="val-display" id="shv">400</span>px</label>
-  <input type="range" id="s-height" min="100" max="1200" value="400" step="10">
-</div>
-<button class="btn btn-red" onclick="renderSticker()">עדכן סטיקר</button>
+
   </div>
 </div>
 
@@ -174,13 +194,22 @@ logoImg.crossOrigin = 'anonymous';
 logoImg.src = LOGO_SRC;
 document.getElementById('hdr-logo').src = LOGO_SRC;
 
-// ---- TABS ----
+// current sticker dimensions
+let stickerW = 800, stickerH = 800;
+
+function setPreset(btn) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  stickerW = parseInt(btn.dataset.w);
+  stickerH = parseInt(btn.dataset.h);
+  renderSticker();
+}
+
 function switchTab(i) {
   document.querySelectorAll('.tab').forEach((t,j) => t.classList.toggle('active', i===j));
   document.querySelectorAll('.page').forEach((p,j) => p.classList.toggle('active', i===j));
 }
 
-// ---- UTILS ----
 function saveCanvas(id, name) {
   const c = document.getElementById(id);
   const a = document.createElement('a'); a.download = name; a.href = c.toDataURL('image/png'); a.click();
@@ -194,7 +223,6 @@ async function copyCanvas(id) {
 function val(id) { return document.getElementById(id).value; }
 function fval(id) { return parseFloat(document.getElementById(id).value); }
 
-// ---- SLIDER DISPLAYS ----
 function bind(id, display, suffix) {
   const el = document.getElementById(id);
   const dsp = document.getElementById(display);
@@ -204,22 +232,21 @@ bind('logo-size','lsv','%'); bind('logo-alpha','lav','%');
 bind('s-size','ssv','px'); bind('s-stroke-w','swv','');
 bind('s-lh','slhv',''); bind('s-logo-size','slsv','%');
 bind('s-logo-alpha','slav','%'); bind('s-pad','spdv','px');
-bind('s-img-size','simgsv','%'); bind('s-img-y','simgyv','%'); bind('s-img-alpha','simgav','%');bind('s-width','swv2','px'); bind('s-height','shv','px');
+bind('s-img-size','simgsv','%'); bind('s-img-y','simgyv','%'); bind('s-img-alpha','simgav','%');
+bind('s-text-y','stpv','%');
 
-// Live preview for sticker
-['s-text','s-font','s-size','s-color','s-stroke','s-stroke-w','s-align','s-lh','s-bg','s-logo-size','s-logo-alpha','s-pad','s-img-size','s-img-y','s-img-alpha'].forEach(id => {
+['s-text','s-font','s-size','s-color','s-stroke','s-stroke-w','s-align','s-lh','s-bg','s-logo-size','s-logo-alpha','s-pad','s-img-size','s-img-y','s-img-alpha','s-text-y'].forEach(id => {
   document.getElementById(id).addEventListener('input', renderSticker);
 });
 
-// ---- PAGE 1: IMAGE + LOGO ----
+// ---- PAGE 1 ----
 const c1 = document.getElementById('c1');
 const ctx1 = c1.getContext('2d');
 let img1 = null;
-let logoX = 0.75, logoY = 0.85; // relative position
+let logoX = 0.75, logoY = 0.85;
 let draggingLogo = false, dragOffX = 0, dragOffY = 0;
 
 document.getElementById('fi1').addEventListener('change', e => loadImg1(e.target.files[0]));
-
 const dz1 = document.getElementById('dz1');
 dz1.addEventListener('dragover', e => { e.preventDefault(); dz1.classList.add('dragover'); });
 dz1.addEventListener('dragleave', () => dz1.classList.remove('dragover'));
@@ -256,24 +283,17 @@ function renderPage1() {
   ctx1.restore();
 }
 
-// Logo drag on canvas
 function canvasPos(canvas, e) {
   const r = canvas.getBoundingClientRect();
-  return {
-    x: (e.clientX - r.left) / r.width,
-    y: (e.clientY - r.top) / r.height
-  };
+  return { x: (e.clientX - r.left) / r.width, y: (e.clientY - r.top) / r.height };
 }
 
 c1.addEventListener('mousedown', e => {
   const p = canvasPos(c1, e);
   const pct = fval('logo-size') / 100;
-  const lw = pct;
-  const lh = lw * (logoImg.height / logoImg.width);
+  const lw = pct, lh = lw * (logoImg.height / logoImg.width);
   if (Math.abs(p.x - logoX) < lw/2 + 0.05 && Math.abs(p.y - logoY) < lh/2 + 0.05) {
-    draggingLogo = true;
-    dragOffX = p.x - logoX;
-    dragOffY = p.y - logoY;
+    draggingLogo = true; dragOffX = p.x - logoX; dragOffY = p.y - logoY;
   }
 });
 c1.addEventListener('mousemove', e => {
@@ -285,14 +305,10 @@ c1.addEventListener('mousemove', e => {
 });
 c1.addEventListener('mouseup', () => draggingLogo = false);
 c1.addEventListener('mouseleave', () => draggingLogo = false);
-
-// Touch support
 c1.addEventListener('touchstart', e => {
-  const t = e.touches[0];
-  const p = canvasPos(c1, t);
+  const p = canvasPos(c1, e.touches[0]);
   const pct = fval('logo-size') / 100;
-  const lw = pct;
-  const lh = lw * (logoImg.height / logoImg.width);
+  const lw = pct, lh = lw * (logoImg.height / logoImg.width);
   if (Math.abs(p.x - logoX) < lw/2 + 0.08 && Math.abs(p.y - logoY) < lh/2 + 0.08) {
     draggingLogo = true; dragOffX = p.x - logoX; dragOffY = p.y - logoY;
   }
@@ -306,13 +322,14 @@ c1.addEventListener('touchmove', e => {
   renderPage1();
 }, {passive:false});
 c1.addEventListener('touchend', () => draggingLogo = false);
-
 document.getElementById('logo-size').addEventListener('input', renderPage1);
 document.getElementById('logo-alpha').addEventListener('input', renderPage1);
 
-// ---- PAGE 2: TEXT STICKER ----
+// ---- PAGE 2 ----
 const c2 = document.getElementById('c2');
+const ctx2 = c2.getContext('2d');
 let stickerImg = null;
+
 document.getElementById('fi2').addEventListener('change', e => {
   const file = e.target.files[0];
   if (!file) return;
@@ -325,9 +342,9 @@ document.getElementById('fi2').addEventListener('change', e => {
   r.readAsDataURL(file);
 });
 document.getElementById('btn-clear-img').addEventListener('click', () => { stickerImg = null; renderSticker(); });
-const ctx2 = c2.getContext('2d');
 
 function renderSticker() {
+  const W = stickerW, H = stickerH;
   const text = document.getElementById('s-text').value;
   const font = val('s-font');
   const size = fval('s-size');
@@ -340,19 +357,20 @@ function renderSticker() {
   const logoPct = fval('s-logo-size') / 100;
   const logoAlpha = fval('s-logo-alpha') / 100;
   const pad = fval('s-pad');
+  const textYPct = fval('s-text-y') / 100;
 
-const W = fval('s-width');
-const H = fval('s-height');
-const lines = text.split('\n');
-const fontStr = `bold ${size}px "${font}", Arial, sans-serif`;
-const lineH = size * lh;
-c2.width = W; c2.height = H;
+  const lines = text.split('\n');
+  const fontStr = `bold ${size}px "${font}", Arial, sans-serif`;
+  const lineH = size * lh;
+  const totalTextH = lines.length * lineH;
+
+  c2.width = W; c2.height = H;
 
   // BG
   ctx2.fillStyle = bgColor;
   ctx2.fillRect(0, 0, W, H);
 
-  // Sticker image layer
+  // Sticker image
   if (stickerImg) {
     const imgPct = fval('s-img-size') / 100;
     const imgAlpha = fval('s-img-alpha') / 100;
@@ -368,7 +386,7 @@ c2.width = W; c2.height = H;
   }
 
   // Logo watermark
-  if (logoImg.complete && logoPct > 0) {
+  if (logoImg.complete && logoImg.naturalWidth && logoPct > 0) {
     const lw = W * logoPct;
     const lh2 = lw * (logoImg.height / logoImg.width);
     const lx = (W - lw) / 2;
@@ -390,8 +408,10 @@ c2.width = W; c2.height = H;
   else if (align === 'right') { ctx2.textAlign = 'right'; xPos = W - pad; }
   else { ctx2.textAlign = 'left'; xPos = pad; }
 
+  const startY = (H - totalTextH) * textYPct;
+
   lines.forEach((line, i) => {
-    const y = pad + i * lineH;
+    const y = startY + i * lineH;
     if (strokeW > 0) {
       ctx2.lineWidth = strokeW * 2;
       ctx2.strokeStyle = strokeColor;
