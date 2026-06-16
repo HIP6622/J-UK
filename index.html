@@ -345,18 +345,6 @@ const W = fval('s-width');
 const H = fval('s-height');
 const lines = text.split('\n');
 const fontStr = `bold ${size}px "${font}", Arial, sans-serif`;
-
-  // Measure
-  const tmpC = document.createElement('canvas');
-  tmpC.width = 1200; tmpC.height = 200;
-  const tmpCtx = tmpC.getContext('2d');
-  tmpCtx.font = fontStr;
-  tmpCtx.direction = 'rtl';
-  let maxW = 0;
-  lines.forEach(l => { const m = tmpCtx.measureText(l).width; if (m > maxW) maxW = m; });
-
-const W = fval('s-width');
-const H = fval('s-height');
 const lineH = size * lh;
 c2.width = W; c2.height = H;
 
